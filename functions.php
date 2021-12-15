@@ -32,9 +32,11 @@ function sort_alphabet($str) {
     return implode($array);
 }
 
-function echo_matrix($arr){
+function echo_matrix($arr, $delimeter=''){
     foreach($arr as $row){
-        echo mkstr($row);
+        foreach($row as $col){
+            echo $delimeter.$col.$delimeter;
+        }
         echo '<br>';
     }
 }
