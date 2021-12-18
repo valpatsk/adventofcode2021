@@ -1,5 +1,5 @@
 <?php
-
+$start = microtime(true);
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -9,6 +9,11 @@ set_time_limit(18000);
 require_once("../dBug.php");
 require_once("../functions.php");
 $rows = file('input.txt');
+
+
+
+
+
 
 $the_matrix = [];
 
@@ -39,36 +44,142 @@ for($i=0; $i <5; $i++){
 //exit;
 
 $the_matrix = $big_matrix;
-echo echo_matrix($the_matrix);
+//echo echo_matrix($the_matrix);
 
 
 
-//part 2 :
+
+
+//part 2, slow :
 
 
 $the_size_xy = count($the_matrix);
 $sum_matrix=array_fill(0,$the_size_xy,array_fill(0,$the_size_xy,999999));
-
+$total_steps=0;
 //the risk of first element is 0 , we already there
 $sum_matrix[0][0]=0;
 
 //echo '<hr>';
 //echo echo_matrix($sum_matrix,' ');
 
-//next_step([0=>[0,0]]);
-nextStep(0,0);
+$steps_to_go = [0=>[0,0]];
+while(!empty($steps_to_go)){
+    $res=[];
+    while($step_coords = array_shift($steps_to_go)){
+        $res = array_merge ($res,nextStep($step_coords[0],$step_coords[1]));
+    }
+    //new dBug($res);
+    $steps_to_go = $res;
+    //new dBUg($steps_to_go);
+    usort($steps_to_go,"the_smallest_first");
+    //new dBUg($steps_to_go);
+    //echo '<hr>';
+}
+
+
+function the_smallest_first($a,$b){
+    global $sum_matrix;
+    if($sum_matrix[$a[0]][$a[1]]>$sum_matrix[$b[0]][$b[1]])return 1;
+    else return -1;
+}
 
 echo '<hr>';
-echo echo_matrix($sum_matrix,' ');
-
-
-
-
+//echo echo_matrix($sum_matrix,' ');
 function nextStep($i,$j){
+    global $sum_matrix,$the_matrix,$total_steps;
+    $total_steps++;
+    $ret = array();
+    
+    //if can go right
+    if(isset($the_matrix[$i][$j+1])){
+        //echo 'right<br>';
+        //if sum of going to right cell will be less then it was before
+        if($sum_matrix[$i][$j+1] > $sum_matrix[$i][$j] + $the_matrix[$i][$j+1]){
+            //echo 'inRight<br>';
+            //change the summ in right cell
+            $sum_matrix[$i][$j+1] = $sum_matrix[$i][$j] + $the_matrix[$i][$j+1];
+            //the sum in this way has been changed, need to recalculate next possible ways to go
+            $ret[]=[$i,$j+1];
+            //nextStep($i,$j+1);
+        }
+    }
+
+    
+    //if can go left
+    if(isset($the_matrix[$i][$j-1])){
+        //echo 'left<br>';
+        //if sum of going left will be less then it was before
+        if($sum_matrix[$i][$j-1] > $sum_matrix[$i][$j] + $the_matrix[$i][$j-1]){
+            //echo 'inLeft<br>';
+            //change the summ in left cell
+            $sum_matrix[$i][$j-1] = $sum_matrix[$i][$j] + $the_matrix[$i][$j-1];
+            //the sum in this way has been changed, need to recalculate next possible ways to go
+            //nextStep($i,$j-1);
+            $ret[]=[$i,$j-1];
+        }
+    }
+    
+
+    //if can go down
+    if(isset($the_matrix[$i+1][$j])){
+        //echo 'down<br>';
+        if($sum_matrix[$i+1][$j] > $sum_matrix[$i][$j] + $the_matrix[$i+1][$j]){
+            //echo 'inDown<br>';
+            //change the summ in down cell
+            $sum_matrix[$i+1][$j] = $sum_matrix[$i][$j] + $the_matrix[$i+1][$j];
+            //the sum in this way has been changed, need to recalculate next possible ways to go
+            //nextStep($i+1,$j);
+            $ret[]=[$i+1,$j];
+        }
+    }
+
+    //if can go up
+    if(isset($the_matrix[$i-1][$j])){
+        //if sum of going down will be less then it was before
+        if($sum_matrix[$i-1][$j] > $sum_matrix[$i][$j] + $the_matrix[$i-1][$j]){
+            //change the summ in up cell
+            $sum_matrix[$i-1][$j] = $sum_matrix[$i][$j] + $the_matrix[$i-1][$j];
+            //the sum in this way has been changed, need to recalculate next possible ways to go
+            //nextStep($i-1,$j);
+            $ret[]=[$i-1,$j];
+        }
+    }
+    
+//new dBUg($ret);
+    return $ret;
+}
+echo '$total_steps: '.$total_steps.'<br>';
+$end = microtime(true);
+echo '<br>Time spent: '.($end-$start).'<br>';
+echo echo_matrix($sum_matrix," " );
+echo '<br>!!!<b>';
+echo intval($sum_matrix[count($sum_matrix)-1][count($sum_matrix[0])-1]) - intval($sum_matrix[0][0]) ;
+echo '</b>';
+
+exit;
+
+
+
+
+
+//part2
+
+$the_size_xy = count($the_matrix);
+$visited=array_fill(0,$the_size_xy,array_fill(0,$the_size_xy,999999));
+$sum_matrix[0][0]=0;
+
+$found = nextStep2($step_coords[0],$step_coords[1]);
+
+
+
+
+function nextStep2($i,$j){
     global $sum_matrix,$the_matrix;
     //$steps_to_check=array();
     //echo '<br>';
     //echo echo_matrix($the_matrix);
+
+    $ret = array();
     
     //if can go right
     if(isset($the_matrix[$i][$j+1])){
@@ -79,7 +190,8 @@ function nextStep($i,$j){
             //change the summ in down cell
             $sum_matrix[$i][$j+1] = $sum_matrix[$i][$j] + $the_matrix[$i][$j+1];
             //the sum in this way has been changed, need to recalculate next possible ways to go
-            nextStep($i,$j+1);
+            $ret[]=[$i,$j+1];
+            //nextStep($i,$j+1);
         }
     }
 
@@ -92,7 +204,8 @@ function nextStep($i,$j){
             //change the summ in left cell
             $sum_matrix[$i][$j-1] = $sum_matrix[$i][$j] + $the_matrix[$i][$j-1];
             //the sum in this way has been changed, need to recalculate next possible ways to go
-            nextStep($i,$j-1);
+            //nextStep($i,$j-1);
+            $ret[]=[$i,$j-1];
         }
     }
 
@@ -104,7 +217,8 @@ function nextStep($i,$j){
             //change the summ in down cell
             $sum_matrix[$i+1][$j] = $sum_matrix[$i][$j] + $the_matrix[$i+1][$j];
             //the sum in this way has been changed, need to recalculate next possible ways to go
-            nextStep($i+1,$j);
+            //nextStep($i+1,$j);
+            $ret[]=[$i+1,$j];
         }
     }
 
@@ -115,12 +229,15 @@ function nextStep($i,$j){
             //change the summ in up cell
             $sum_matrix[$i-1][$j] = $sum_matrix[$i][$j] + $the_matrix[$i-1][$j];
             //the sum in this way has been changed, need to recalculate next possible ways to go
-            nextStep($i-1,$j);
+            //nextStep($i-1,$j);
+            $ret[]=[$i-1,$j];
         }
     }
+
+    return $ret;
 }
 
-exit;
+
 
 
 //part 1 was made in this way:
