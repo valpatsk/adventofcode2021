@@ -30,7 +30,7 @@ for($i=0; $i <5; $i++){
     }
 }
 
-//$the_matrix = $big_matrix;
+$the_matrix = $big_matrix;
 
 $the_size_xy = count($the_matrix);
 $sum_matrix=array_fill(0,$the_size_xy,array_fill(0,$the_size_xy,999999));
